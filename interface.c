@@ -43,13 +43,13 @@ int main(int argc, char** argv)
 		a=atoi(argv[1]);
 		total=shift_left(total, a);
 		bigint_to_string(output, total);
-		//printf("%s\n",output);
-		printf("Total: %s\n", output);
-		printf("Words in total: %i\n",(int)total.num_words);
-		printf("Bits in total: %i\n",bit_count(total));
-		printf("words: ");
-		for(int i=5;i>=0;i--) printf("%lu ",(unsigned long)total.words[i]);
-		printf("\n");
+		printf("%s\n",output);
+		//printf("Total: %s\n", output);
+		//printf("Words in total: %i\n",(int)total.num_words);
+		//printf("Bits in total: %i\n",bit_count(total));
+		//printf("words: ");
+		//for(int i=5;i>=0;i--) printf("%lu ",(unsigned long)total.words[i]);
+		//printf("\n");
 	//}
 	return 0;
 }

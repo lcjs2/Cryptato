@@ -51,9 +51,6 @@ void bigint_to_string(char* output, bigint a)
 	{
 		a=divide_with_remainder(a,ten, &r);
 		sprintf(buffer+(len++),"%i",r.words[0]);
-		printf("Dividing by 10\n");
-		printf("Result: %lu %lu, remainder %i\n",a.words[1],a.words[0],r.words[0]);
-		
 	}
 	//Reverse string
 	for(int i=0;i<len/2;i++)
@@ -109,7 +106,8 @@ bigint add(bigint a, bigint b)
 		c.words[i]=(uint32_t)d;
 		carry=(int)(d>>32);
 	}
-	c.num_words=smin(BI_WORDS,smax(a.num_words, b.num_words)+carry);
+	c.num_words=smax(a.num_words, b.num_words);
+	if(carry && c.num_words<BI_WORDS) c.words[c.num_words++]=carry;
 	return c;
 };
 
@@ -169,7 +167,7 @@ bigint divide_with_remainder(bigint a, bigint b, bigint* r)
 	bigint one=int_to_bigint(1);
 	while(is_geq(a,b))
 	{
-		int d = bit_count(a)-bit_count(b)-1;
+		int d = bit_count(a)-(bit_count(b)+1);
 		// If a, b same length then we can subtract all of b
 		// since we know a>=b
 		if(d==-1) d=0;
