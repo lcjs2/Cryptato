@@ -1,6 +1,6 @@
 FLAGS = -Wall -std=c99
 
-OFILES = md5.o aes.o interface.o
+OFILES = md5.o aes.o interface.o integers.o
 
 all: interface tidy
 
@@ -15,6 +15,9 @@ md5.o: md5.c
 
 aes.o: aes.c
 	gcc $(FLAGS) -c aes.c
+
+integers.o: integers.c
+	gcc $(FLAGS) -c integers.c
 
 tidy:
 	rm -f $(OFILES)

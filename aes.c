@@ -75,22 +75,30 @@ void schedule_core(uint8_t* t, int i)
 }
 
 // Accepts keys of 128, 192 or 256 bits (16, 24 or 32 bytes)
-// Produces 176=11x16 bytes
+// Produces 176, 216 or 256 bits
 void key_schedule(uint8_t* result, const uint8_t* key, int key_bytes)
 {
-	int i=1;
-	uint8_t t[4];
+	// 0 for 16-byte key, 1 for 24-byte key, 2 for 32-byte key
+	int key_mode=(key_bytes/8)-2; 
 	
 	// First n bytes of the key schedule are the key itself
 	memcpy(result, key, key_bytes);
 	result+=key_bytes;
 	int bytes_made=key_bytes;
-	while(bytes_made<176)
+	uint8_t t[4];
+	int i=1;
+	while(bytes_made<176+(32*key_mode))
 	{
-		for(int j=0;j<4;j++)
+		for(int j=0;j<4+(2*key_mode);j++)
 		{
 			memcpy(t, result-4,4);
+			
 			if(j==0) schedule_core(t,i++);
+			if((j==4) && (key_mode==2))
+			{
+				for(int k=0;k<4;k++) t[k]=sbox(t[k]);
+			}
+			
 			for(int k=0;k<4;k++) result[k]=t[k]^(result[k-key_bytes]);
 			result+=4;
 			bytes_made+=4;
@@ -219,21 +227,25 @@ void inv_mix_columns(uint8_t* state)
 }
 
 void aes_encode_block(uint8_t* result, const uint8_t* data,
-		const uint8_t*key, int key_size)
+		const uint8_t*key, int key_bytes)
 {
+	// 0 for 16-byte key, 1 for 24-byte key, 2 for 32-byte key
+	int key_mode=(key_bytes/8)-2;
+	
 	uint8_t state[16];
 	memcpy(state, data, 16);
 
-	uint8_t round_keys[176];
-	key_schedule(round_keys, key, 16);
+	uint8_t round_keys[256];
+	key_schedule(round_keys, key, key_bytes);
 
 	// Begin rounds
 	xor_key(state, round_keys);
-	for(int i=0;i<10;i++)
+	int rounds = 10 + 2*key_mode;
+	for(int i=0;i<rounds;i++)
 	{
 		sub_bytes(state);
 		shift_rows(state);
-		if(i!=10-1) mix_columns(state);
+		if(i!=rounds-1) mix_columns(state);
 		xor_key(state, round_keys + 16 + 16*i);
 	}
 
@@ -243,19 +255,23 @@ void aes_encode_block(uint8_t* result, const uint8_t* data,
 }
 
 void aes_decode_block(uint8_t* result, const uint8_t* data,
-		const uint8_t*key, int key_size)
+		const uint8_t*key, int key_bytes)
 {
+	// 0 for 16-byte key, 1 for 24-byte key, 2 for 32-byte key
+	int key_mode=(key_bytes/8)-2;
+	
 	uint8_t state[16];
 	memcpy(state, data, 16);
 
-	uint8_t round_keys[176];
+	uint8_t round_keys[256];
 	key_schedule(round_keys, key, 16);
 
 	// Begin rounds
-	for(int i=9;i>=0;i--)
+	int rounds = 10 + 2*key_mode;
+	for(int i=rounds-1;i>=0;i--)
 	{
 		xor_key(state, round_keys + 16 + 16*i);
-		if(i!=10-1) inv_mix_columns(state);
+		if(i!=rounds-1) inv_mix_columns(state);
 		inv_shift_rows(state);
 		inv_sub_bytes(state);
 	}
